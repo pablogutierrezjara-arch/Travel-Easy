@@ -1,0 +1,100 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
+import { v4 as uuid } from "uuid";
+import { motion } from "framer-motion";
+import { Plane, Hotel, CalendarDays, ClipboardList, Upload, Download, Trash2, Plus, MapPin, Clock, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+
+
+// ------------------------------
+// Types
+// ------------------------------
+interface Flight {
+id: string;
+carrier: string;
+number: string;
+from: string;
+to: string;
+departISO: string; // ISO string
+arriveISO: string; // ISO string
+price: number;
+conf?: string; // confirmation code
+notes?: string;
+}
+
+
+interface HotelStay {
+id: string;
+name: string;
+city: string;
+checkInISO: string;
+checkOutISO: string;
+rooms: number;
+pricePerNight: number;
+conf?: string;
+notes?: string;
+}
+
+
+interface Activity {
+id: string;
+title: string;
+city: string;
+startISO: string;
+endISO: string;
+cost: number;
+notes?: string;
+}
+
+
+interface TripMeta {
+title: string;
+travelers: number;
+currency: string; // e.g., EUR, USD
+}
+
+
+interface AppState {
+meta: TripMeta;
+flights: Flight[];
+hotels: HotelStay[];
+activities: Activity[];
+}
+
+
+const STORAGE_KEY = "itinerary_builder_v1";
+
+
+// ------------------------------
+// Helpers
+// ------------------------------
+function isoLocal(date?: string) {
+return date ? new Date(date).toISOString().slice(0, 16) : "";
+}
+
+
+function parseNumber(value: string) {
+const n = Number(value);
+return Number.isFinite(n) ? n : 0;
+}
+
+
+function nightsBetween(startISO: string, endISO: string) {
+const start = new Date(startISO);
+const end = new Date(endISO);
+const diff = Math.max(0, end.getTime() - start.getTime());
+return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+
+function currencyFmt(currency: string, value: number) {
+try {
+return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
+} catch {
+}
